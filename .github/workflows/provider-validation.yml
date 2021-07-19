@@ -1,0 +1,55 @@
+# This is a basic workflow to help you get started with Actions
+
+name: Provider Validation
+
+# Controls when the action will run. 
+on:
+  # Triggers the workflow on push or pull request events but only for the master branch
+  pull_request:
+    branches: [ develop ]
+
+  # Allows you to run this workflow manually from the Actions tab
+  workflow_dispatch:
+
+# A workflow run is made up of one or more jobs that can run sequentially or in parallel
+jobs:
+  # This workflow contains a single job called "build"
+  build:
+    # The type of runner that the job will run on
+    runs-on: ubuntu-latest
+
+    # Steps represent a sequence of tasks that will be executed as part of the job
+    steps:
+      # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
+      - name: Checkout working repository
+        uses: actions/checkout@v2
+    
+      - name: Checkout system-connector-tools repository
+        uses: actions/checkout@master
+        with:
+          repository: webMethods-Connectors/system-connector-tools
+          token: ${{ secrets.GH_SECRET_TOKEN }}
+          path: system-connector-tools
+          ref: master
+               
+      - name: copy validator.jar to current working directory
+        run: sudo cp -r /home/runner/work/system-connector-template/system-connector-template/system-connector-tools/ConnectorTools/build/provider-validator.jar /home/runner/work/system-connector-template/system-connector-template
+        
+      - name: Execute provider-validator.jar
+        run: |
+          output=$(java -jar provider-validator.jar ${{ github.repository }})
+          echo $output
+          echo "::set-output name=execution_result::$output"
+        id: execute_validator
+          
+      - name: Upload Report to Artifacts
+        uses: actions/upload-artifact@v2
+        with:
+          name: Health Report
+          path: |
+            ProviderHealth.html
+            ExtensionHealth.html 
+
+      - name: Exit if Failure
+        if: ${{ steps.execute_validator.outputs.execution_result == 'FAILURE' }}
+        run: exit 1
