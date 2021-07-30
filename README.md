@@ -1,6 +1,6 @@
 ## Connector Template Repository
   
-  This repository can be used as a template for creating a Connector repository and building a Connector.
+  This repository can be used as a template for creating a Connector repository and building a Connector using Gradle.
 
   The repository consists of the following folders and files:
 
